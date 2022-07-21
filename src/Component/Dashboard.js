@@ -9,7 +9,7 @@ import Comparison from "./Comparison";
 
 const COLUMNS = ["A", "B", "C", "D", "E", "F", "G", "H"];
 const SELECTIONS = ["Z", "Y", "X", "W", "V", "U", "T", "S"];
-const PARTICIPANTS = ["SB01", "SB02", "SB03", "SB04", "SB04", "SB05", "SB06", "SB07", "SB08"];
+const PARTICIPANTS = ["SB01", "SB02", "SB03", "SB04", "SB05", "SB06", "SB07", "SB08"];
 
 export default function Dashboard() {
     const timestampConverter = (timestamp) => {
