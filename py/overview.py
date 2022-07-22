@@ -1,5 +1,6 @@
 from flask import Flask
 from flask_cors import CORS
+import csv
 
 app = Flask(__name__)
 CORS(app)
@@ -8,11 +9,20 @@ CORS(app)
 def test():
     return {"participant": "python"}
 
-
 # sync data from csv
 @app.route("/overview/synccsv")
 def syncFromCSV():
-    pass
+    file = open("./public/Accelerometer/Accelerometer-test.csv")
+    csvreader = csv.reader(file)
+    headers = []
+    headers = next(csvreader)
+    fullData = []
+    for row in csvreader:
+        rowObj = {}
+        for h, r in zip(headers, row):
+            rowObj[h] = r
+        fullData.append(rowObj)
+    return {"data": fullData}
 
 # sync data from db
 @app.route("/overview/syncdb")
