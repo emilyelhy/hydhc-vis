@@ -12,7 +12,7 @@ def test():
 # sync data from csv
 @app.route("/overview/synccsv")
 def syncFromCSV():
-    file = open("./public/Accelerometer/Accelerometer-test.csv")
+    file = open("./public/Accelerometer/daily_rowcount_res.csv")
     csvreader = csv.reader(file)
     headers = []
     headers = next(csvreader)
@@ -29,7 +29,7 @@ def syncFromCSV():
 def syncFromDB():
     pass
 
-# aggregate sync data
+# aggregate raw data and save as daily_rowcount_res.csv
 def aggregateSynced():
     pass
 

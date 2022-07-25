@@ -112,8 +112,8 @@ export default function Overview() {
                             hideSelectedOptions={false}
                             components={{ Option }}
                             allowSelectAll={true}
-                            placeholder={dataType.length >= 4 ? "Multiple" : "None"}
-                            controlShouldRenderValue={dataType.length < 4 ? true : false}
+                            placeholder={dataType.length >= 2 ? "Selected " + dataType.length : "None"}
+                            controlShouldRenderValue={dataType.length < 2 ? true : false}
                             onChange={(selected) => setDataType(selected)}
                             value={dataType}
                         />
@@ -127,8 +127,8 @@ export default function Overview() {
                             hideSelectedOptions={false}
                             components={{ Option }}
                             allowSelectAll={true}
-                            placeholder={participants.length >= 3 ? "Multiple" : "None"}
-                            controlShouldRenderValue={participants.length < 3 ? true : false}
+                            placeholder={participants.length >= 2 ? "Selected " + dataType.length : "None"}
+                            controlShouldRenderValue={participants.length < 2 ? true : false}
                             onChange={(selected) => setParticipants(selected)}
                             value={participants}
                         />
