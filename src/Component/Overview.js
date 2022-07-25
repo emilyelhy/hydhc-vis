@@ -91,7 +91,7 @@ export default function Overview() {
     };
 
     return (
-        <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflowY: "hidden" }}>
             <div style={{ flex: 1, maxHeight: 220, minHeight: 200 }}>
                 <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", paddingTop: 10, backgroundColor: "#00a7b5" }}>
                     <h3 style={{ paddingLeft: 20, alignSelf: "center", color: "#ffffff" }}>Overview</h3>
@@ -152,7 +152,7 @@ export default function Overview() {
                     </Button>
                 </div>
             </div>
-            <div style={{ flex: 6, overflowY: "scroll" }}>
+            <div style={{ flex: 6, overflow: "scroll" }}>
                 <OverviewGraph></OverviewGraph>
             </div>
         </div>
