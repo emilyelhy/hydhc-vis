@@ -9,70 +9,53 @@ import OverviewGraph from './OverviewGraph';
 
 const OLDESTTIME = 1658329200000;
 const ALLDATATYPE_OPTION = [
-    { value: "data1", label: "Data 1" },
-    { value: "data2", label: "Data 2" },
-    { value: "data3", label: "Data 3" },
-    { value: "data4", label: "Data 4" },
-    { value: "data5", label: "Data 5" },
-    { value: "data6", label: "Data 6" },
-    { value: "data7", label: "Data 7" },
-    { value: "data8", label: "Data 8" },
-    { value: "data9", label: "Data 9" },
-    { value: "data10", label: "Data 10" },
-    { value: "data11", label: "Data 11" },
-    { value: "data12", label: "Data 12" },
-    { value: "data13", label: "Data 13" },
-    { value: "data14", label: "Data 14" },
-    { value: "data15", label: "Data 15" },
-    { value: "data16", label: "Data 16" },
-    { value: "data17", label: "Data 17" },
-    { value: "data18", label: "Data 18" },
-    { value: "data19", label: "Data 19" },
-    { value: "data20", label: "Data 20" }
-];
-const PARTI_OPTION = [
-    { value: "parti1", label: "Participant 1" },
-    { value: "parti2", label: "Participant 2" },
-    { value: "parti3", label: "Participant 3" },
-    { value: "parti4", label: "Participant 4" },
-    { value: "parti5", label: "Participant 5" },
-    { value: "parti6", label: "Participant 6" },
-    { value: "parti7", label: "Participant 7" },
-    { value: "parti8", label: "Participant 8" },
-    { value: "parti9", label: "Participant 9" },
-    { value: "parti10", label: "Participant 10" },
-    { value: "parti11", label: "Participant 11" },
-    { value: "parti12", label: "Participant 12" },
-    { value: "parti13", label: "Participant 13" },
-    { value: "parti14", label: "Participant 14" },
-    { value: "parti15", label: "Participant 15" },
-    { value: "parti16", label: "Participant 16" },
-    { value: "parti17", label: "Participant 17" },
-    { value: "parti18", label: "Participant 18" },
-    { value: "parti19", label: "Participant 19" },
-    { value: "parti20", label: "Participant 20" }
+    { value: "bluetooth", label: "bluetooth", count: 0 },
+    { value: "wifi", label: "wifi", count: 1 },
+    { value: "battery", label: "battery", count: 2 },
+    { value: "data_traffic", label: "data_traffic", count: 3 },
+    { value: "device_event", label: "device_event", count: 4 },
+    { value: "installed_app", label: "installed_app", count: 5 },
+    { value: "app_usage", label: "app_usage", count: 6 },
+    { value: "call_log", label: "call_log", count: 7 },
+    { value: "message", label: "message", count: 8 },
+    { value: "location", label: "location", count: 9 },
+    { value: "fitness", label: "fitness", count: 10 },
+    { value: "physical_activity", label: "physical_activity", count: 11 },
+    { value: "physical_activity_transition", label: "physical_activity_transition", count: 12 },
+    { value: "survey", label: "survey", count: 13 }
 ];
 
 export default function Overview() {
     const [oldestTime, setOldestTime] = useState(OLDESTTIME);
     const [syncTime, setSyncTime] = useState(Date.now());
     const [timeRange, setTimeRange] = useState([oldestTime, syncTime]);
-    const [dataType, setDataType] = useState([]);
+    const [dataType, setDataType] = useState(ALLDATATYPE_OPTION);
     const [participants, setParticipants] = useState([]);
+    const [dynamicParticipants, setDynamicParticipants] = useState([]);
     const [fullData, setFullData] = useState([]);
+    const [dynamicData, setDynamicData] = useState([]);
 
     
     useEffect(() => {
         fetchAllData();
         setOldestTime(OLDESTTIME);
-        setDataType(ALLDATATYPE_OPTION);
-        setParticipants(PARTI_OPTION);
     }, []);
     
     const fetchAllData = async () => {
+        // set full data
         const res = await fetch("http://localhost:5000/overview/synccsv");
         const data = await res.json();
         setFullData(data.data);
+        setDynamicData(data.data);
+        // set participants
+        const temp = [];
+        let count = 0;
+        data.data.forEach((d) => {
+            if(!temp.some(t => t.value === d.email)) temp.push({value: d.email, label: d.email, count: count});
+            count = count + 1;
+        });
+        setParticipants(temp);
+        setDynamicParticipants(temp);
     }
 
     const syncData = () => {
@@ -83,6 +66,11 @@ export default function Overview() {
         var date = new Date(timestamp);
         return date.getFullYear() + "-" + String((date.getMonth() + 1)).padStart(2, '0') + "-" + String(date.getDate()).padStart(2, '0') + " " + String(date.getHours()).padStart(2, '0') + ":" + String(date.getMinutes()).padStart(2, '0');
     };
+
+    const handleParticipantsChange = (selected) => {
+        setDynamicParticipants(selected.sort((a, b) => a.count - b.count ));
+        setDynamicData(fullData.filter(d => selected.some(sel => sel.value === d.email)));
+    }
 
     const Option = (props) => {
         return (
@@ -123,23 +111,23 @@ export default function Overview() {
                             allowSelectAll={true}
                             placeholder={dataType.length >= 2 ? "Selected " + dataType.length : "None"}
                             controlShouldRenderValue={dataType.length < 2 ? true : false}
-                            onChange={(selected) => setDataType(selected)}
+                            onChange={(selected) => setDataType(selected.sort((a, b) => a.count - b.count ))}
                             value={dataType}
                         />
                     </div>
                     <h5 style={{ marginLeft: 30, marginRight: 30 }}>Participants</h5>
                     <div style={{ width: "15%" }}>
                         <ReactSelect
-                            options={PARTI_OPTION}
+                            options={participants}
                             isMulti
                             closeMenuOnSelect={false}
                             hideSelectedOptions={false}
                             components={{ Option }}
                             allowSelectAll={true}
-                            placeholder={participants.length >= 2 ? "Selected " + participants.length : "None"}
-                            controlShouldRenderValue={participants.length < 2 ? true : false}
-                            onChange={(selected) => setParticipants(selected)}
-                            value={participants}
+                            placeholder={dynamicParticipants.length >= 2 ? "Selected " + dynamicParticipants.length : "None"}
+                            controlShouldRenderValue={dynamicParticipants.length < 2 ? true : false}
+                            onChange={(selected) => handleParticipantsChange(selected)}
+                            value={dynamicParticipants}
                         />
                     </div>
                 </div>
@@ -162,7 +150,7 @@ export default function Overview() {
                 </div>
             </div>
             <div style={{ flex: 6, overflow: "scroll" }}>
-                {fullData.length === 0 ? <></> : <OverviewGraph fullData={fullData}></OverviewGraph>}
+                {fullData.length === 0 ? <></> : <OverviewGraph fullData={dynamicData} dataType={dataType} participants={dynamicParticipants}></OverviewGraph>}
             </div>
         </div>
     )

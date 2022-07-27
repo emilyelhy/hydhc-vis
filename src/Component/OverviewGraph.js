@@ -27,12 +27,21 @@ export default function OverviewGraph(props) {
     const [loading, setLoading] = useState(true);
     const [margin, setMargin] = useState({});
     const [showData, setShowData] = useState([]);
+    const [dataType, setDataType] = useState([]);
+    const [participants, setParticipants] = useState([]);
     const [svgSize, setSVGSize] = useState({ width: 3300, height: 100 });
 
     // for getting sync data
     useEffect(() => {
+        const temp = [];
+        props.dataType.forEach((d) => {
+            let id = ENTIRE_KEYS.find((key) => key.internalName === d.value);
+            if (id) temp.push(id);
+        });
+        setDataType(temp);
+        setParticipants(props.participants);
         setFullData(props.fullData);
-    }, []);
+    }, [props]);
 
     // for setting data with required param
     useEffect(() => {
@@ -58,8 +67,8 @@ export default function OverviewGraph(props) {
                 .domain(showData.map(d => d.email))
                 .rangeRound([0, svgSize.height]);
 
-            for (let i = 0; i < ENTIRE_KEYS.length; i++) {
-                x.domain([0, d3.max(showData, d => Number(d[ENTIRE_KEYS[i].internalName]))])
+            for (let i = 0; i < dataType.length; i++) {
+                x.domain([0, d3.max(showData, d => Number(d[dataType[i].internalName]))])
                     .range([0, 70]);
                 svg.selectAll("#bars")
                     .append("g")
@@ -69,21 +78,21 @@ export default function OverviewGraph(props) {
                     .append("rect")
                     .attr("x", x(0) + 200 * i + 10)
                     .attr("y", d => y(d.email) + margin.top + margin.bottom)
-                    .attr("width", d => x(Number(d[ENTIRE_KEYS[i].internalName])))
+                    .attr("width", d => x(Number(d[dataType[i].internalName])))
                     .attr("height", 25)
-                    .attr("fill", ENTIRE_KEYS.find((key) => key.internalName === ENTIRE_KEYS[i].internalName).color);
+                    .attr("fill", dataType.find((key) => key.internalName === dataType[i].internalName).color);
             }
             return () => {
                 svg.selectAll("#bars > *").remove();
             }
         }
-    }, [loading, svgSize, margin, showData]);
+    }, [loading, svgSize, margin, showData, dataType]);
 
     // // for rendering all graph components other than bars
     useEffect(() => {
         const svg = d3.select(svgRef.current);
         const y = d3.scaleBand()
-            .domain(showData.map(d => d.email))
+            .domain(participants.map(p => p.value))
             .range([0, svgSize.height]);
 
         // yAxis(email name)
@@ -113,19 +122,19 @@ export default function OverviewGraph(props) {
         svg.selectAll("#data-type")
             .append("g")
             .attr("class", "appended-columnhead")
-            .data(ENTIRE_KEYS.map(key => key.displayName))
+            .data(dataType.map(key => key.displayName))
             .enter()
             .append("text")
             .style("font", "16px Roboto-Black")
             .style("fill", '#4a4a4a')
             .text(d => d)
-            .attr("x", (d, i) => 200 * i + 100 - (ENTIRE_KEYS.find((key) => key.displayName === d).posOffset / 2) )
+            .attr("x", (d, i) => 200 * i + 100 - (dataType.find((key) => key.displayName === d).posOffset / 2) )
             .attr("transform", "translate(0, " + (-margin.top - 10) + ")");
 
         // rendering text: count
         svg.selectAll("#count-label")
             .append("g")
-            .data(ENTIRE_KEYS)
+            .data(dataType)
             .enter()
             .append("text")
             .style("font", "14px Roboto-Medium")
@@ -137,7 +146,7 @@ export default function OverviewGraph(props) {
         // rendering text: value
         svg.selectAll("#value-label")
             .append("g")
-            .data(ENTIRE_KEYS)
+            .data(dataType)
             .enter()
             .append("text")
             .style("font", "14px Roboto-Medium")
@@ -150,7 +159,7 @@ export default function OverviewGraph(props) {
         return () => {
             svg.selectAll("*").remove();
         }
-    }, [showData, svgSize, margin]);
+    }, [showData, svgSize, margin, dataType]);
 
     return (
         <div className="fragment">
