@@ -59,12 +59,21 @@ export default function Overview() {
     const [timeRange, setTimeRange] = useState([oldestTime, syncTime]);
     const [dataType, setDataType] = useState([]);
     const [participants, setParticipants] = useState([]);
+    const [fullData, setFullData] = useState([]);
 
+    
     useEffect(() => {
+        fetchAllData();
         setOldestTime(OLDESTTIME);
         setDataType(ALLDATATYPE_OPTION);
         setParticipants(PARTI_OPTION);
     }, []);
+    
+    const fetchAllData = async () => {
+        const res = await fetch("http://localhost:5000/overview/synccsv");
+        const data = await res.json();
+        setFullData(data.data);
+    }
 
     const syncData = () => {
         setSyncTime(Date.now());
@@ -127,7 +136,7 @@ export default function Overview() {
                             hideSelectedOptions={false}
                             components={{ Option }}
                             allowSelectAll={true}
-                            placeholder={participants.length >= 2 ? "Selected " + dataType.length : "None"}
+                            placeholder={participants.length >= 2 ? "Selected " + participants.length : "None"}
                             controlShouldRenderValue={participants.length < 2 ? true : false}
                             onChange={(selected) => setParticipants(selected)}
                             value={participants}
@@ -153,7 +162,7 @@ export default function Overview() {
                 </div>
             </div>
             <div style={{ flex: 6, overflow: "scroll" }}>
-                <OverviewGraph></OverviewGraph>
+                {fullData.length === 0 ? <></> : <OverviewGraph fullData={fullData}></OverviewGraph>}
             </div>
         </div>
     )

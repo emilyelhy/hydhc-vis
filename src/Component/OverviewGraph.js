@@ -5,11 +5,23 @@ import * as d3 from 'd3';
 const SVG_WIDTH = 3300;
 const MARGIN = { top: 20, right: 20, bottom: 20, left: 230 };
 const ENTIRE_KEYS = [
-    'bluetooth', 'wifi', 'battery', 'data_traffic', 'device_event',
-    'installed_app', 'app_usage', 'call_log', 'message', 'location',
-    'fitness', 'physical_activity', 'physical_activity_transition', 'survey'];
+    { internalName: 'bluetooth', displayName: "BLUETOOTH", posOffset: 91, color: "#E69138" },
+    { internalName: 'wifi', displayName: "WIFI", posOffset: 33, color: "#E69138" },
+    { internalName: 'battery', displayName: "BATTERY", posOffset: 70, color: "#F2BA4E" },
+    { internalName: 'data_traffic', displayName: "DATA TRAFFIC", posOffset: 108, color: "#F2BA4E" },
+    { internalName: 'device_event', displayName: "DEVICE EVENT", posOffset: 108, color: "#F2BA4E" },
+    { internalName: 'installed_app', displayName: "INSTALLED APP", posOffset: 118, color: "#F2BA4E" },
+    { internalName: 'app_usage', displayName: "APP USAGE", posOffset: 88, color: "#F2BA4E" },
+    { internalName: 'call_log', displayName: "CALL LOG", posOffset: 73, color: "#5EA280" },
+    { internalName: 'message', displayName: "MESSAGE", posOffset: 74, color: "#5EA280" },
+    { internalName: 'location', displayName: "LOCATION", posOffset: 76, color: "#397CB2" },
+    { internalName: 'fitness', displayName: "FITNESS", posOffset: 63, color: "#397CB2" },
+    { internalName: 'physical_activity', displayName: "PHYSICAL ACTIVITY", posOffset: 152, color: "#397CB2" },
+    { internalName: 'physical_activity_transition', displayName: "TRANSITION", posOffset: 94, color: "#397CB2" },
+    { internalName: 'survey', displayName: "SURVEY", posOffset: 61, color: "#7357B9" }
+];
 
-export default function OverviewGraph() {
+export default function OverviewGraph(props) {
     const svgRef = useRef();
     const [fullData, setFullData] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -19,12 +31,7 @@ export default function OverviewGraph() {
 
     // for getting sync data
     useEffect(() => {
-        const fetchAllData = async () => {
-            const res = await fetch("http://localhost:5000/overview/synccsv");
-            const data = await res.json();
-            setFullData(data.data);
-        }
-        fetchAllData();
+        setFullData(props.fullData);
     }, []);
 
     // for setting data with required param
@@ -32,8 +39,8 @@ export default function OverviewGraph() {
         const temp = fullData.filter(row => { return row['day'] === "23-11-21" });
         setShowData(temp);
         setSVGSize({ width: SVG_WIDTH, height: temp.length * 50 });
-        setLoading(false);
         setMargin(MARGIN);
+        if (fullData != null) setLoading(false);
     }, [fullData]);
 
     // for rendering count bar chart
@@ -48,13 +55,13 @@ export default function OverviewGraph() {
             const y = d3.scaleBand()
                 .paddingInner(0.05)
                 .align(0.1)
-                .domain(showData.map(d => { return d.email; }))
+                .domain(showData.map(d => d.email))
                 .rangeRound([0, svgSize.height]);
 
             for (let i = 0; i < ENTIRE_KEYS.length; i++) {
-                x.domain([0, d3.max(showData, d => { return Number(d[ENTIRE_KEYS[i]]); })])
+                x.domain([0, d3.max(showData, d => Number(d[ENTIRE_KEYS[i].internalName]))])
                     .range([0, 70]);
-                svg.selectAll("g")
+                svg.selectAll("#bars")
                     .append("g")
                     .attr("class", "appended")
                     .data(showData)
@@ -62,62 +69,86 @@ export default function OverviewGraph() {
                     .append("rect")
                     .attr("x", x(0) + 200 * i + 10)
                     .attr("y", d => y(d.email) + margin.top + margin.bottom)
-                    .attr("width", d => x(Number(d[ENTIRE_KEYS[i]])))
+                    .attr("width", d => x(Number(d[ENTIRE_KEYS[i].internalName])))
                     .attr("height", 25)
+                    .attr("fill", ENTIRE_KEYS.find((key) => key.internalName === ENTIRE_KEYS[i].internalName).color);
+            }
+            return () => {
+                svg.selectAll("#bars > *").remove();
             }
         }
     }, [loading, svgSize, margin, showData]);
 
-    // for rendering xAxis label
-    useEffect(() => {
-        const svg = d3.select(svgRef.current);
-        svg.selectAll("g")
-            .append("g")
-            .attr("class", "appended-columnhead")
-            .data(ENTIRE_KEYS)
-            .enter()
-            .append("text")
-            .style("font", "16px Roboto-Black")
-            .style("fill", '#4a4a4a')
-            .text(d => { return d })
-            .attr("x", (d, i) => { return 200 * i + 100 - (d.length * 10 / 2) })
-            .attr("transform", "translate(0, " + 0 + ")")
-    })
-
-    // for rendering email name and gray horizontal lines + clearing prev rendered graph
+    // // for rendering all graph components other than bars
     useEffect(() => {
         const svg = d3.select(svgRef.current);
         const y = d3.scaleBand()
-            .paddingInner(0.05)
-            .align(0.1)
-            .domain(showData.map(d => { return d.email; }))
-            .rangeRound([0, svgSize.height]);
+            .domain(showData.map(d => d.email))
+            .range([0, svgSize.height]);
+
         // yAxis(email name)
         function yAxis(g) {
-            g.attr("transform", "translate(0, " + 30 + ")")
-                .attr("class", "appended-yaxis")
+            g.attr("transform", "translate(0, 30)")
                 .call(d3.axisLeft(y)
                     .tickSizeOuter(0)
                     .tickSizeInner(0)
                 )
                 .selectAll('text')
                 .attr("x", -10)
-                .style("font", "13px Roboto")
-                .attr("transform", "translate(0, " + (0) + ")")
+                .style("font", "13px Roboto");
         }
         svg.append("g").call(yAxis);
+
         // gray horizontal lines
-        for (let j = 0; j < showData.length + 1; j++) {
+        for (let j = 0; j < showData.length + 2; j++) {
             svg.append('path').attr('class', 'appended')
                 .attr('width', svgSize.width - margin.left - margin.right)
                 .attr('stroke', '#cccccc')
                 .attr('stroke-width', '0.5')
                 .attr('d', 'M 20 ' + (j * 50 - 2) + ' L' + (svgSize.width - margin.left - margin.right) + ' ' + (j * 50 - 2) + 'H 10')
-                .attr("transform", "translate(0, " + (margin.top + 10) + ")")
+                .attr("transform", "translate(" + (-margin.left) + ", " + (-margin.top) + ")");
         }
+
+        // data type label
+        svg.selectAll("#data-type")
+            .append("g")
+            .attr("class", "appended-columnhead")
+            .data(ENTIRE_KEYS.map(key => key.displayName))
+            .enter()
+            .append("text")
+            .style("font", "16px Roboto-Black")
+            .style("fill", '#4a4a4a')
+            .text(d => d)
+            .attr("x", (d, i) => 200 * i + 100 - (ENTIRE_KEYS.find((key) => key.displayName === d).posOffset / 2) )
+            .attr("transform", "translate(0, " + (-margin.top - 10) + ")");
+
+        // rendering text: count
+        svg.selectAll("#count-label")
+            .append("g")
+            .data(ENTIRE_KEYS)
+            .enter()
+            .append("text")
+            .style("font", "14px Roboto-Medium")
+            .style("fill", '#4a4a4a')
+            .text("COUNT")
+            .attr("x", (_, i) => 20 + 200 * i + 10 )
+            .attr("transform", "translate(0, " + (margin.top) + ")");
+
+        // rendering text: value
+        svg.selectAll("#value-label")
+            .append("g")
+            .data(ENTIRE_KEYS)
+            .enter()
+            .append("text")
+            .style("font", "14px Roboto-Medium")
+            .style("fill", '#4a4a4a')
+            .text("VALUE")
+            .attr("x", (_, i) => 110 + 200 * i + 10 )
+            .attr("transform", "translate(0, " + (margin.top) + ")");
+
         // clear old graphs
         return () => {
-            svg.selectAll("*").remove()
+            svg.selectAll("*").remove();
         }
     }, [showData, svgSize, margin]);
 
@@ -129,6 +160,10 @@ export default function OverviewGraph() {
                 </mui.Backdrop>
                 :
                 <svg ref={svgRef} width={SVG_WIDTH}>
+                    <g id="data-type"></g>
+                    <g id="count-label"></g>
+                    <g id="value-label"></g>
+                    <g id="bars"></g>
                 </svg>
             }
         </div>
