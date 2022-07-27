@@ -40,17 +40,17 @@ export default function OverviewGraph(props) {
         });
         setDataType(temp);
         setParticipants(props.participants);
+        console.log(props.fullData);
         setFullData(props.fullData);
     }, [props]);
 
     // for setting data with required param
     useEffect(() => {
-        const temp = fullData.filter(row => { return row['day'] === "23-11-21" });
-        setShowData(temp);
-        setSVGSize({ width: SVG_WIDTH, height: temp.length * 50 });
+        setShowData(fullData);
+        setSVGSize({ width: SVG_WIDTH, height: fullData.length * 50 });
         setMargin(MARGIN);
         if (fullData != null) setLoading(false);
-    }, [fullData]);
+    }, [fullData, props]);
 
     // for rendering count bar chart
     useEffect(() => {
@@ -109,7 +109,7 @@ export default function OverviewGraph(props) {
         svg.append("g").call(yAxis);
 
         // gray horizontal lines
-        for (let j = 0; j < showData.length + 2; j++) {
+        for (let j = 0; j < participants.length + 2; j++) {
             svg.append('path').attr('class', 'appended')
                 .attr('width', svgSize.width - margin.left - margin.right)
                 .attr('stroke', '#cccccc')
@@ -128,7 +128,7 @@ export default function OverviewGraph(props) {
             .style("font", "16px Roboto-Black")
             .style("fill", '#4a4a4a')
             .text(d => d)
-            .attr("x", (d, i) => 200 * i + 100 - (dataType.find((key) => key.displayName === d).posOffset / 2) )
+            .attr("x", (d, i) => 200 * i + 100 - (dataType.find((key) => key.displayName === d).posOffset / 2))
             .attr("transform", "translate(0, " + (-margin.top - 10) + ")");
 
         // rendering text: count
@@ -140,7 +140,7 @@ export default function OverviewGraph(props) {
             .style("font", "14px Roboto-Medium")
             .style("fill", '#4a4a4a')
             .text("COUNT")
-            .attr("x", (_, i) => 20 + 200 * i + 10 )
+            .attr("x", (_, i) => 20 + 200 * i + 10)
             .attr("transform", "translate(0, " + (margin.top) + ")");
 
         // rendering text: value
@@ -152,14 +152,14 @@ export default function OverviewGraph(props) {
             .style("font", "14px Roboto-Medium")
             .style("fill", '#4a4a4a')
             .text("VALUE")
-            .attr("x", (_, i) => 110 + 200 * i + 10 )
+            .attr("x", (_, i) => 110 + 200 * i + 10)
             .attr("transform", "translate(0, " + (margin.top) + ")");
 
         // clear old graphs
         return () => {
             svg.selectAll("*").remove();
         }
-    }, [showData, svgSize, margin, dataType]);
+    }, [showData, svgSize, margin, dataType, participants]);
 
     return (
         <div className="fragment">
@@ -168,12 +168,19 @@ export default function OverviewGraph(props) {
                     <mui.CircularProgress color="inherit" />
                 </mui.Backdrop>
                 :
-                <svg ref={svgRef} width={SVG_WIDTH}>
-                    <g id="data-type"></g>
-                    <g id="count-label"></g>
-                    <g id="value-label"></g>
-                    <g id="bars"></g>
-                </svg>
+                <>
+                    {fullData.length === 0
+                        ?
+                        <></>
+                        :
+                        <svg ref={svgRef} width={SVG_WIDTH}>
+                            <g id="data-type"></g>
+                            <g id="count-label"></g>
+                            <g id="value-label"></g>
+                            <g id="bars"></g>
+                        </svg>
+                    }
+                </>
             }
         </div>
     )

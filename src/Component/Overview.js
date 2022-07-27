@@ -34,29 +34,37 @@ export default function Overview() {
     const [dynamicParticipants, setDynamicParticipants] = useState([]);
     const [fullData, setFullData] = useState([]);
     const [dynamicData, setDynamicData] = useState([]);
+    const [date, setDate] = useState([]);
+    const [dynamicDate, setDynamicDate] = useState([]);
 
     
     useEffect(() => {
+        const fetchAllData = async () => {
+            // set full data
+            const res = await fetch("http://localhost:5000/overview/synccsv");
+            const data = await res.json();
+            setFullData(data.data);
+            console.log(data.data)
+            // set participants + dates
+            const tempParti = [];
+            const tempDate = [];
+            let count = 0;
+            data.data.forEach((d) => {
+                if(!tempParti.some(t => t.value === d.email)) tempParti.push({value: d.email, label: d.email, count: count});
+                if(!tempDate.some(t => t.value === d.day)) tempDate.push({value: d.day, label: d.day});
+                count = count + 1;
+            });
+            setParticipants(tempParti);
+            setDynamicParticipants(tempParti);
+            setDate(tempDate);
+            setDynamicDate(tempDate);
+            handleDateChange(tempDate)
+        }
+        
         fetchAllData();
         setOldestTime(OLDESTTIME);
     }, []);
     
-    const fetchAllData = async () => {
-        // set full data
-        const res = await fetch("http://localhost:5000/overview/synccsv");
-        const data = await res.json();
-        setFullData(data.data);
-        setDynamicData(data.data);
-        // set participants
-        const temp = [];
-        let count = 0;
-        data.data.forEach((d) => {
-            if(!temp.some(t => t.value === d.email)) temp.push({value: d.email, label: d.email, count: count});
-            count = count + 1;
-        });
-        setParticipants(temp);
-        setDynamicParticipants(temp);
-    }
 
     const syncData = () => {
         setSyncTime(Date.now());
@@ -70,6 +78,30 @@ export default function Overview() {
     const handleParticipantsChange = (selected) => {
         setDynamicParticipants(selected.sort((a, b) => a.count - b.count ));
         setDynamicData(fullData.filter(d => selected.some(sel => sel.value === d.email)));
+    }
+
+    const handleDateChange = async (selected) => {
+        setDynamicDate(selected);
+        const reqOptions = {
+            method: "POST",
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({dates: selected})
+        }
+        const res = await fetch("http://localhost:5000/overview/getaggregated", reqOptions);
+        const resJson = await res.json();
+        const aggregated = [];
+        resJson.data.forEach((d) => {
+            const a = aggregated.find((aggre) => aggre.email === d.email)
+            if(a){
+                ALLDATATYPE_OPTION.forEach((type) => {
+                    a[type.value] = a[type.value] + d[type.value] 
+                })
+            } else {
+                aggregated.push(d);
+            }
+        })
+        console.log(aggregated);
+        setDynamicData(aggregated);
     }
 
     const Option = (props) => {
@@ -130,6 +162,21 @@ export default function Overview() {
                             value={dynamicParticipants}
                         />
                     </div>
+                    <h5 style={{ marginLeft: 30, marginRight: 30 }}>Dates</h5>
+                    <div style={{ width: "15%" }}>
+                        <ReactSelect
+                            options={date}
+                            isMulti
+                            closeMenuOnSelect={false}
+                            hideSelectedOptions={false}
+                            components={{ Option }}
+                            allowSelectAll={true}
+                            placeholder={dynamicDate.length >= 2 ? "Selected " + dynamicDate.length : "None"}
+                            controlShouldRenderValue={dynamicDate.length < 2 ? true : false}
+                            onChange={(selected) => handleDateChange(selected)}
+                            value={dynamicDate}
+                        />
+                    </div>
                 </div>
                 <div style={{ display: "flex", flexDirection: "row" }}>
                     <h5 style={{ marginLeft: 30, marginRight: 30, alignSelf: "center" }}>Period</h5>
@@ -150,7 +197,7 @@ export default function Overview() {
                 </div>
             </div>
             <div style={{ flex: 6, overflow: "scroll" }}>
-                {fullData.length === 0 ? <></> : <OverviewGraph fullData={dynamicData} dataType={dataType} participants={dynamicParticipants}></OverviewGraph>}
+                {fullData.length === 0 ? <></> : <OverviewGraph fullData={dynamicData} dataType={dataType} participants={dynamicParticipants} dates={dynamicDate}></OverviewGraph>}
             </div>
         </div>
     )

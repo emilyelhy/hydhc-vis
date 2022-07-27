@@ -1,9 +1,11 @@
 from flask import Flask
+from flask import request
 from flask_cors import CORS
 import csv
 
 app = Flask(__name__)
 CORS(app)
+
 
 @app.route("/personal")
 def test():
@@ -34,9 +36,19 @@ def aggregateSynced():
     pass
 
 # return aggregated data
-@app.route("/overview/getaggregated")
+@app.route("/overview/getaggregated", methods=['GET', 'POST'])
 def returnAggregated():
-    pass
+    if request.method == "POST":
+        dates = request.json["dates"]
+        dataObj = syncFromCSV()
+        data = dataObj["data"]
+        snipData = []
+        for d in data:
+            for day in dates:
+                if d["day"] == day["value"]:
+                    snipData.append(d)
+        return {"data": snipData}
+    return {"data": []}
 
 
 if __name__ == "__main__":
