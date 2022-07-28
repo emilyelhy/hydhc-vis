@@ -2,6 +2,7 @@ from flask import Flask
 from flask import request
 from flask_cors import CORS
 import csv
+import platform
 
 app = Flask(__name__)
 CORS(app)
@@ -14,7 +15,10 @@ def test():
 # sync data from csv
 @app.route("/overview/synccsv")
 def syncFromCSV():
-    file = open("./public/Accelerometer/daily_rowcount_res.csv")
+    if platform.system() == "Windows":
+        file = open("..\public\Accelerometer\daily_rowcount_res.csv")
+    else:
+        file = open("./public/Accelerometer/daily_rowcount_res.csv")
     csvreader = csv.reader(file)
     headers = []
     headers = next(csvreader)

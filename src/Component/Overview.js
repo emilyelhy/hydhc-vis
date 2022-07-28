@@ -32,8 +32,9 @@ export default function Overview() {
     const [dataType, setDataType] = useState(ALLDATATYPE_OPTION);
     const [participants, setParticipants] = useState([]);
     const [dynamicParticipants, setDynamicParticipants] = useState([]);
-    const [fullData, setFullData] = useState([]);
-    const [dynamicData, setDynamicData] = useState([]);
+    const [fullData, setFullData] = useState([]);                           // full set of data since sync
+    const [snipData, setSnipData] = useState([]);                           // snipped data according to date selected
+    const [dynamicData, setDynamicData] = useState([]);                     // data chosen based on chosen parti and data type (ready to be passed to graph)
     const [date, setDate] = useState([]);
     const [dynamicDate, setDynamicDate] = useState([]);
 
@@ -44,7 +45,6 @@ export default function Overview() {
             const res = await fetch("http://localhost:5000/overview/synccsv");
             const data = await res.json();
             setFullData(data.data);
-            console.log(data.data)
             // set participants + dates
             const tempParti = [];
             const tempDate = [];
@@ -58,9 +58,8 @@ export default function Overview() {
             setDynamicParticipants(tempParti);
             setDate(tempDate);
             setDynamicDate(tempDate);
-            handleDateChange(tempDate)
+            setDynamicData(await aggregateData(tempDate));
         }
-        
         fetchAllData();
         setOldestTime(OLDESTTIME);
     }, []);
@@ -77,32 +76,38 @@ export default function Overview() {
 
     const handleParticipantsChange = (selected) => {
         setDynamicParticipants(selected.sort((a, b) => a.count - b.count ));
-        setDynamicData(fullData.filter(d => selected.some(sel => sel.value === d.email)));
-    }
+        setDynamicData(snipData.filter(d => selected.some(sel => sel.value === d.email)));
+    };
+
+    const aggregateData = async (selectedDates) => {
+        const reqOptions = {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({dates: selectedDates})
+        };
+        const res = await fetch("http://localhost:5000/overview/getaggregated", reqOptions);
+        const resJson = await res.json();
+        const result = [];
+        resJson.data.forEach((d) => {
+            const r = result.find((res) => res.email === d.email)
+            if(r) {
+                ALLDATATYPE_OPTION.forEach((type) => {
+                    r[type.value] = Number(r[type.value]) + Number(d[type.value])
+                })
+            } else {
+                result.push(d);
+            }
+        })
+        console.log(result)
+        return result;
+    };
 
     const handleDateChange = async (selected) => {
         setDynamicDate(selected);
-        const reqOptions = {
-            method: "POST",
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({dates: selected})
-        }
-        const res = await fetch("http://localhost:5000/overview/getaggregated", reqOptions);
-        const resJson = await res.json();
-        const aggregated = [];
-        resJson.data.forEach((d) => {
-            const a = aggregated.find((aggre) => aggre.email === d.email)
-            if(a){
-                ALLDATATYPE_OPTION.forEach((type) => {
-                    a[type.value] = a[type.value] + d[type.value] 
-                })
-            } else {
-                aggregated.push(d);
-            }
-        })
-        console.log(aggregated);
-        setDynamicData(aggregated);
-    }
+        const aggregated = await aggregateData(selected);
+        setSnipData(await aggregateData(selected));
+        setDynamicData(aggregated.filter(d => dynamicParticipants.some(sel => sel.value === d.email)));
+    };
 
     const Option = (props) => {
         return (
