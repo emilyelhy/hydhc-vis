@@ -16,7 +16,7 @@ def test():
 @app.route("/overview/synccsv")
 def syncFromCSV():
     if platform.system() == "Windows":
-        file = open("..\public\Accelerometer\daily_rowcount_res.csv")
+        file = open("..\\public\\Accelerometer\\daily_rowcount_res.csv")
     else:
         file = open("./public/Accelerometer/daily_rowcount_res.csv")
     csvreader = csv.reader(file)
