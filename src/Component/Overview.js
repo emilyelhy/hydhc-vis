@@ -58,7 +58,9 @@ export default function Overview() {
             setDynamicParticipants(tempParti);
             setDate(tempDate);
             setDynamicDate(tempDate);
-            setDynamicData(await aggregateData(tempDate));
+            const editedData = await aggregateData(tempDate);
+            setDynamicData(editedData);
+            setSnipData(editedData);
         }
         fetchAllData();
         setOldestTime(OLDESTTIME);
