@@ -5,20 +5,20 @@ import * as d3 from 'd3';
 const SVG_WIDTH = 3300;
 const MARGIN = { top: 20, right: 20, bottom: 20, left: 230 };
 const ENTIRE_KEYS = [
-    { internalName: 'bluetooth', displayName: "BLUETOOTH", posOffset: 91, color: "#E69138" },
-    { internalName: 'wifi', displayName: "WIFI", posOffset: 33, color: "#E69138" },
-    { internalName: 'battery', displayName: "BATTERY", posOffset: 70, color: "#F2BA4E" },
-    { internalName: 'data_traffic', displayName: "DATA TRAFFIC", posOffset: 108, color: "#F2BA4E" },
-    { internalName: 'device_event', displayName: "DEVICE EVENT", posOffset: 108, color: "#F2BA4E" },
-    { internalName: 'installed_app', displayName: "INSTALLED APP", posOffset: 118, color: "#F2BA4E" },
-    { internalName: 'app_usage', displayName: "APP USAGE", posOffset: 88, color: "#F2BA4E" },
-    { internalName: 'call_log', displayName: "CALL LOG", posOffset: 73, color: "#5EA280" },
-    { internalName: 'message', displayName: "MESSAGE", posOffset: 74, color: "#5EA280" },
-    { internalName: 'location', displayName: "LOCATION", posOffset: 76, color: "#397CB2" },
-    { internalName: 'fitness', displayName: "FITNESS", posOffset: 63, color: "#397CB2" },
-    { internalName: 'physical_activity', displayName: "PHYSICAL ACTIVITY", posOffset: 152, color: "#397CB2" },
-    { internalName: 'physical_activity_transition', displayName: "TRANSITION", posOffset: 94, color: "#397CB2" },
-    { internalName: 'survey', displayName: "SURVEY", posOffset: 61, color: "#7357B9" }
+    { internalName: 'bluetooth', displayName: "BLUETOOTH", posOffset: 91, color: "#E69138", lineField: [] },
+    { internalName: 'wifi', displayName: "WIFI", posOffset: 33, color: "#E69138", lineField: ["eval_numOfAP"] },
+    { internalName: 'battery', displayName: "BATTERY", posOffset: 70, color: "#F2BA4E", lineField: ["eval_level"] },
+    { internalName: 'data_traffic', displayName: "DATA TRAFFIC", posOffset: 108, color: "#F2BA4E", lineField: ["eval_txBytes", "eval_rxBytes"] },
+    { internalName: 'device_event', displayName: "DEVICE EVENT", posOffset: 108, color: "#F2BA4E", lineField: [] },
+    { internalName: 'installed_app', displayName: "INSTALLED APP", posOffset: 118, color: "#F2BA4E", lineField: ["eval_numOfApps"] },
+    { internalName: 'app_usage', displayName: "APP USAGE", posOffset: 88, color: "#F2BA4E", lineField: [] },
+    { internalName: 'call_log', displayName: "CALL LOG", posOffset: 73, color: "#5EA280", lineField: [] },
+    { internalName: 'message', displayName: "MESSAGE", posOffset: 74, color: "#5EA280", lineField: [] },
+    { internalName: 'location', displayName: "LOCATION", posOffset: 76, color: "#397CB2", lineField: ["eval_speed"] },
+    { internalName: 'fitness', displayName: "FITNESS", posOffset: 63, color: "#397CB2", lineField: ["eval_stepCount", "eval_calories", "eval_distance"] },
+    { internalName: 'physical_activity', displayName: "PHYSICAL ACTIVITY", posOffset: 152, color: "#397CB2", lineField: [] },
+    { internalName: 'physical_activity_transition', displayName: "TRANSITION", posOffset: 94, color: "#397CB2", lineField: [] },
+    { internalName: 'survey', displayName: "SURVEY", posOffset: 61, color: "#7357B9", lineField: [] }
 ];
 
 export default function OverviewGraph(props) {
@@ -68,6 +68,7 @@ export default function OverviewGraph(props) {
                 .rangeRound([0, svgSize.height]);
 
             for (let i = 0; i < dataType.length; i++) {
+                // bars
                 x.domain([0, d3.max(showData, d => Number(d[dataType[i].internalName]))])
                     .range([0, 70]);
                 svg.selectAll("#bars")
@@ -81,12 +82,29 @@ export default function OverviewGraph(props) {
                     .attr("width", d => x(Number(d[dataType[i].internalName])))
                     .attr("height", 25)
                     .attr("fill", dataType.find((key) => key.internalName === dataType[i].internalName).color);
+
+                // sparklines
+                // for (let j = 0; i < participants.length; j++) {
+                //     const sparklineData = showData.filter((row) =>
+                //         row["email"] === participants[j] && row["datumType"] === dataType[i]
+                //     );
+                //     if (dataType.lineField != null && dataType.lineField.length > 0) {
+                //         svg.selectAll("#spark")
+                //             .append("g")
+                //             .append("path")
+                //             .datum(sparklineData)
+                //             .attr("fill", d => dataType[i].color)
+                //             .attr("fill-opacity", .2)
+                //             .attr("transform", "translate(" + ((i) * 200 + 90) + "," + (j * 50 + 135) + ")")
+                //     }
+                // }
             }
+
             return () => {
                 svg.selectAll("#bars > *").remove();
             }
         }
-    }, [loading, svgSize, margin, showData, dataType]);
+    }, [loading, svgSize, margin, showData, dataType, participants]);
 
     // // for rendering all graph components other than bars
     useEffect(() => {
@@ -178,6 +196,7 @@ export default function OverviewGraph(props) {
                             <g id="count-label"></g>
                             <g id="value-label"></g>
                             <g id="bars"></g>
+                            <g id="spark"></g>
                         </svg>
                     }
                 </>

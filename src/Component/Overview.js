@@ -44,12 +44,12 @@ export default function Overview() {
             // set full data
             const res = await fetch("http://localhost:5000/overview/synccsv");
             const data = await res.json();
-            setFullData(data.data);
+            setFullData(data.countData);
             // set participants + dates
             const tempParti = [];
             const tempDate = [];
             let count = 0;
-            data.data.forEach((d) => {
+            data.countData.forEach((d) => {
                 if(!tempParti.some(t => t.value === d.email)) tempParti.push({value: d.email, label: d.email, count: count});
                 if(!tempDate.some(t => t.value === d.day)) tempDate.push({value: d.day, label: d.day});
                 count = count + 1;
